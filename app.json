@@ -2,14 +2,15 @@
   "expo": {
     "name": "emoji-draw",
     "slug": "emoji-draw",
-    "version": "1.0.0",
-    "orientation": "portrait",
+    "version": "1.0.1",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "emojidraw",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon",
       "bundleIdentifier": "emojidraw",
+      "supportsTablet": true,
+      "requireFullScreen": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -22,7 +23,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.emojidraw"
+      "package": "app.emojidraw"
     },
     "web": {
       "output": "static",
@@ -40,7 +41,16 @@
           }
         }
       ],
-      "expo-audio"
+      "expo-audio",
+      "expo-asset",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow Emoji Draw to access your photos so you can save and manage drawings.",
+          "savePhotosPermission": "Allow Emoji Draw to save your drawings to your photo library."
+        }
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,

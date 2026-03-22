@@ -3,10 +3,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SkImage, SkPicture } from '@shopify/react-native-skia';
 import {
   FilterMode,
+  ImageFormat,
   MipmapMode,
   Skia,
   TileMode,
 } from '@shopify/react-native-skia';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as MediaLibrary from 'expo-media-library';
 import { PixelRatio } from 'react-native';
 
 import {
@@ -34,6 +37,8 @@ import {
   playEmojiPlacementSound,
   playSwirlDragSound,
   playTruckDragSound,
+  playRedoSound,
+  playUndoSound,
   primeEmojiPlacementAudio,
   stopSwirlDragSound,
   stopTruckDragSound,
@@ -428,6 +433,8 @@ export function useEmojiCanvas() {
   const [activeSwirls, setActiveSwirls] = useState<SwirlEffect[]>([]);
   const [activeTruckMove, setActiveTruckMove] = useState<TruckMoveEffect | null>(null);
   const [bombAnimationTick, setBombAnimationTick] = useState(0);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
 
   const lastPointRef = useRef<CanvasPoint | null>(null);
   const canvasBoundsRef = useRef<CanvasBounds>({ width: 0, height: 0 });
@@ -445,6 +452,8 @@ export function useEmojiCanvas() {
   const lastPlayedAtRef = useRef(0);
   const selectedEmojiRef = useRef(selectedEmoji);
   const brushSizeRef = useRef(brushSize);
+  const historyPastRef = useRef<Array<SkPicture | null>>([]);
+  const historyFutureRef = useRef<Array<SkPicture | null>>([]);
 
   selectedEmojiRef.current = selectedEmoji;
   brushSizeRef.current = brushSize;
@@ -457,6 +466,49 @@ export function useEmojiCanvas() {
         cancelAnimationFrame(frameRequestRef.current);
       }
     };
+  }, []);
+
+  const resetInFlightDrawingState = useCallback(() => {
+    if (frameRequestRef.current !== null) {
+      cancelAnimationFrame(frameRequestRef.current);
+      frameRequestRef.current = null;
+    }
+
+    activeStampsRef.current = [];
+    queuedPointsRef.current = [];
+    setActiveStamps([]);
+    armedBombsRef.current = [];
+    setArmedBombs([]);
+    activeBlastEffectsRef.current = [];
+    setActiveBlastEffects([]);
+    activeShockwavesRef.current = [];
+    setActiveShockwaves([]);
+    activeSwirlsRef.current = [];
+    setActiveSwirls([]);
+    activeTruckMoveRef.current = null;
+    setActiveTruckMove(null);
+    stopSwirlDragSound();
+    stopTruckDragSound(false);
+    setBombAnimationTick(0);
+    lastPlayedAtRef.current = 0;
+    lastPointRef.current = null;
+    strokeStartPointRef.current = null;
+  }, []);
+
+  const commitPicture = useCallback((nextPicture: SkPicture | null, recordHistory = true) => {
+    if (nextPicture === committedEmojiPictureRef.current) {
+      return;
+    }
+
+    if (recordHistory) {
+      historyPastRef.current = historyPastRef.current.concat(committedEmojiPictureRef.current);
+      historyFutureRef.current = [];
+      setCanUndo(historyPastRef.current.length > 0);
+      setCanRedo(false);
+    }
+
+    committedEmojiPictureRef.current = nextPicture;
+    setCommittedEmojiPicture(nextPicture);
   }, []);
 
   useEffect(() => {
@@ -512,8 +564,7 @@ export function useEmojiCanvas() {
           patches.length === 0 ? persistentEffects : undefined,
           patches
         );
-        committedEmojiPictureRef.current = nextEmojiPicture;
-        setCommittedEmojiPicture(nextEmojiPicture);
+        commitPicture(nextEmojiPicture);
       }
       if (blastResolution.activeEffects.length !== activeBlastEffectsRef.current.length) {
         activeBlastEffectsRef.current = blastResolution.activeEffects;
@@ -535,8 +586,7 @@ export function useEmojiCanvas() {
           devicePixelRatioRef.current
         );
         if (bakedPicture !== committedEmojiPictureRef.current) {
-          committedEmojiPictureRef.current = bakedPicture;
-          setCommittedEmojiPicture(bakedPicture);
+          commitPicture(bakedPicture);
         }
       }
       if (swirlResolution.activeEffects.length !== activeSwirlsRef.current.length) {
@@ -549,13 +599,12 @@ export function useEmojiCanvas() {
     return () => {
       clearInterval(intervalId);
     };
-  }, [activeBlastEffects.length, activeShockwaves.length, activeSwirls.length, armedBombs.length]);
+  }, [activeBlastEffects.length, activeShockwaves.length, activeSwirls.length, armedBombs.length, commitPicture]);
 
   const commitStamps = useCallback((stamps: EmojiStamp[]) => {
     const picture = recordPicture(committedEmojiPictureRef.current, stamps);
-    committedEmojiPictureRef.current = picture;
-    setCommittedEmojiPicture(picture);
-  }, []);
+    commitPicture(picture);
+  }, [commitPicture]);
 
   const armBombStamps = useCallback((stamps: EmojiStamp[]) => {
     if (stamps.length === 0) {
@@ -749,8 +798,7 @@ export function useEmojiCanvas() {
           devicePixelRatioRef.current
         );
         if (nextPicture !== committedEmojiPictureRef.current) {
-          committedEmojiPictureRef.current = nextPicture;
-          setCommittedEmojiPicture(nextPicture);
+          commitPicture(nextPicture);
         }
       }
       stopTruckDragSound(shouldPlayEndSound);
@@ -768,41 +816,103 @@ export function useEmojiCanvas() {
     queuedPointsRef.current = [];
     lastPointRef.current = null;
     strokeStartPointRef.current = null;
-  }, [armBombStamps, commitStamps, flushQueuedPoints]);
+  }, [armBombStamps, commitPicture, commitStamps, flushQueuedPoints]);
 
   const updateBrushSize = useCallback((nextSize: number) => {
     setBrushSize(clampBrushSize(nextSize, BRUSH_SIZE_LIMITS.min, BRUSH_SIZE_LIMITS.max));
   }, []);
 
   const clearCanvas = useCallback(() => {
-    if (frameRequestRef.current !== null) {
-      cancelAnimationFrame(frameRequestRef.current);
-      frameRequestRef.current = null;
+    resetInFlightDrawingState();
+    if (committedEmojiPictureRef.current !== null) {
+      commitPicture(null);
     }
-    activeStampsRef.current = [];
-    queuedPointsRef.current = [];
-    setActiveStamps([]);
-    committedEmojiPictureRef.current = null;
-    setCommittedEmojiPicture(null);
-    armedBombsRef.current = [];
-    setArmedBombs([]);
-    activeBlastEffectsRef.current = [];
-    setActiveBlastEffects([]);
-    activeShockwavesRef.current = [];
-    setActiveShockwaves([]);
-    activeSwirlsRef.current = [];
-    setActiveSwirls([]);
-    stopSwirlDragSound();
-    activeTruckMoveRef.current = null;
-    setActiveTruckMove(null);
-    stopTruckDragSound(false);
-    setBombAnimationTick(0);
     idCounterRef.current = 0;
-    lastPlayedAtRef.current = 0;
-    lastPointRef.current = null;
-    strokeStartPointRef.current = null;
     canvasBoundsRef.current = { width: 0, height: 0 };
+  }, [commitPicture, resetInFlightDrawingState]);
+
+  const saveDrawing = useCallback(async () => {
+    const picture = committedEmojiPictureRef.current;
+    const bounds = canvasBoundsRef.current;
+    if (!picture || bounds.width <= 0 || bounds.height <= 0) {
+      return false;
+    }
+
+    const width = Math.max(1, Math.round(bounds.width));
+    const height = Math.max(1, Math.round(bounds.height));
+    const surface = Skia.Surface.MakeOffscreen(width, height);
+    if (!surface) {
+      return false;
+    }
+
+    let fileUri: string | null = null;
+    let snapshot: ReturnType<typeof surface.makeImageSnapshot> | null = null;
+    try {
+      const canvas = surface.getCanvas();
+      canvas.clear(Skia.Color('white'));
+      canvas.drawPicture(picture);
+      surface.flush();
+
+      snapshot = surface.makeImageSnapshot();
+      const base64 = snapshot.encodeToBase64(ImageFormat.PNG, 100);
+      if (!base64 || !FileSystem.cacheDirectory) {
+        return false;
+      }
+
+      fileUri = `${FileSystem.cacheDirectory}emoji-draw-${Date.now()}.png`;
+      await FileSystem.writeAsStringAsync(fileUri, base64, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      const permission = await MediaLibrary.requestPermissionsAsync();
+      if (!permission.granted) {
+        return false;
+      }
+
+      await MediaLibrary.saveToLibraryAsync(fileUri);
+      return true;
+    } catch {
+      return false;
+    } finally {
+      if (fileUri) {
+        await FileSystem.deleteAsync(fileUri, { idempotent: true }).catch(() => undefined);
+      }
+      snapshot?.dispose();
+      surface.dispose();
+    }
   }, []);
+
+  const undo = useCallback(() => {
+    const previousPicture = historyPastRef.current.at(-1);
+    if (previousPicture === undefined) {
+      return;
+    }
+
+    historyPastRef.current = historyPastRef.current.slice(0, -1);
+    historyFutureRef.current = [committedEmojiPictureRef.current, ...historyFutureRef.current];
+    setCanUndo(historyPastRef.current.length > 0);
+    setCanRedo(historyFutureRef.current.length > 0);
+    committedEmojiPictureRef.current = previousPicture;
+    setCommittedEmojiPicture(previousPicture);
+    resetInFlightDrawingState();
+    playUndoSound();
+  }, [resetInFlightDrawingState]);
+
+  const redo = useCallback(() => {
+    const nextPicture = historyFutureRef.current[0];
+    if (nextPicture === undefined) {
+      return;
+    }
+
+    historyFutureRef.current = historyFutureRef.current.slice(1);
+    historyPastRef.current = historyPastRef.current.concat(committedEmojiPictureRef.current);
+    setCanUndo(historyPastRef.current.length > 0);
+    setCanRedo(historyFutureRef.current.length > 0);
+    committedEmojiPictureRef.current = nextPicture;
+    setCommittedEmojiPicture(nextPicture);
+    resetInFlightDrawingState();
+    playRedoSound();
+  }, [resetInFlightDrawingState]);
 
   return useMemo(
     () => ({
@@ -823,6 +933,11 @@ export function useEmojiCanvas() {
       continueStroke,
       endStroke,
       clearCanvas,
+      saveDrawing,
+      undo,
+      redo,
+      canUndo,
+      canRedo,
     }),
     [
       activeStamps,
@@ -834,11 +949,16 @@ export function useEmojiCanvas() {
       beginStroke,
       bombAnimationTick,
       brushSize,
+      canRedo,
+      canUndo,
       clearCanvas,
       committedEmojiPicture,
       continueStroke,
       endStroke,
+      saveDrawing,
+      redo,
       selectedEmoji,
+      undo,
       updateBrushSize,
     ]
   );

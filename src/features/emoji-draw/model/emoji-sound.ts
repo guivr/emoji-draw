@@ -53,7 +53,6 @@ const ALIEN_SOUND_VARIANTS: AudioSource[] = [
   require('../../../../assets/audio/placements/alien_02.wav'),
   require('../../../../assets/audio/placements/alien_03.wav'),
   require('../../../../assets/audio/placements/alien_04.wav'),
-  require('../../../../assets/audio/placements/alien_05.wav'),
 ];
 
 const MONEY_SOUND_VARIANTS: AudioSource[] = [
@@ -73,7 +72,6 @@ const JUMP_SOUND_VARIANTS: AudioSource[] = [
 const DRUM_SOUND_VARIANTS: AudioSource[] = [
   require('../../../../assets/audio/placements/drum_01.wav'),
   require('../../../../assets/audio/placements/drum_02.wav'),
-  require('../../../../assets/audio/placements/drum_03.wav'),
 ];
 
 const TRUMPET_SOUND_VARIANTS: AudioSource[] = [
@@ -103,7 +101,6 @@ const WOW_SOUND_VARIANTS: AudioSource[] = [
 const PARTY_SOUND_VARIANTS: AudioSource[] = [
   require('../../../../assets/audio/placements/party_01.wav'),
   require('../../../../assets/audio/placements/party_02.wav'),
-  require('../../../../assets/audio/placements/party_03.wav'),
 ];
 
 const SIREN_SOUND_VARIANTS: AudioSource[] = [
@@ -130,8 +127,6 @@ const CAT_SOUND_VARIANTS: AudioSource[] = [
   require('../../../../assets/audio/placements/cat_01.wav'),
   require('../../../../assets/audio/placements/cat_02.wav'),
   require('../../../../assets/audio/placements/cat_03.wav'),
-  require('../../../../assets/audio/placements/cat_04.wav'),
-  require('../../../../assets/audio/placements/cat_05.wav'),
 ];
 
 const DOG_SOUND_VARIANTS: AudioSource[] = [
@@ -144,7 +139,6 @@ const DOG_SOUND_VARIANTS: AudioSource[] = [
 const SANTA_SOUND_VARIANTS: AudioSource[] = [
   require('../../../../assets/audio/placements/santa_01.wav'),
   require('../../../../assets/audio/placements/santa_02.wav'),
-  require('../../../../assets/audio/placements/santa_03.wav'),
 ];
 
 const VOMIT_SOUND_VARIANTS: AudioSource[] = [
@@ -152,7 +146,6 @@ const VOMIT_SOUND_VARIANTS: AudioSource[] = [
   require('../../../../assets/audio/placements/vomit_02.wav'),
   require('../../../../assets/audio/placements/vomit_03.wav'),
   require('../../../../assets/audio/placements/vomit_04.wav'),
-  require('../../../../assets/audio/placements/vomit_05.wav'),
 ];
 
 const KISS_SOUND_VARIANTS: AudioSource[] = [

@@ -156,7 +156,7 @@ describe('emoji sound mapping', () => {
 
     expect(getSoundSourceForPlacement('👽', 3)).toEqual(
       expect.objectContaining({
-        cacheKey: 'emoji:👽:4',
+        cacheKey: 'emoji:👽:3',
       })
     );
 
@@ -219,7 +219,7 @@ describe('emoji sound mapping', () => {
 
     expect(getSoundSourceForPlacement('🥁', 3)).toEqual(
       expect.objectContaining({
-        cacheKey: 'emoji:🥁:2',
+        cacheKey: 'emoji:🥁:1',
       })
     );
 
@@ -324,7 +324,7 @@ describe('emoji sound mapping', () => {
 
     expect(getSoundSourceForPlacement('🎉', 3)).toEqual(
       expect.objectContaining({
-        cacheKey: 'emoji:🎉:2',
+        cacheKey: 'emoji:🎉:1',
       })
     );
 
@@ -408,7 +408,7 @@ describe('emoji sound mapping', () => {
 
     expect(getSoundSourceForPlacement('😸', 3)).toEqual(
       expect.objectContaining({
-        cacheKey: 'emoji:😸:4',
+        cacheKey: 'emoji:😸:2',
       })
     );
 
@@ -450,7 +450,7 @@ describe('emoji sound mapping', () => {
 
     expect(getSoundSourceForPlacement('🎅', 3)).toEqual(
       expect.objectContaining({
-        cacheKey: 'emoji:🎅:2',
+        cacheKey: 'emoji:🎅:1',
       })
     );
 
@@ -471,7 +471,7 @@ describe('emoji sound mapping', () => {
 
     expect(getSoundSourceForPlacement('🤢', 3)).toEqual(
       expect.objectContaining({
-        cacheKey: 'emoji:🤢:4',
+        cacheKey: 'emoji:🤢:3',
       })
     );
 

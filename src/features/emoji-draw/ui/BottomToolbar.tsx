@@ -10,6 +10,7 @@ import {
 } from '@/features/emoji-draw/model/emoji-sound-player';
 import { BOMB_EMOJI, BRUSH_SIZE_LIMITS } from '@/features/emoji-draw/model/types';
 import { BrushSizePuck } from '@/features/emoji-draw/ui/BrushSizePuck';
+import { CONTROL_SCALE, scaleControlSize } from '@/features/emoji-draw/ui/control-scale';
 import { getEmojiStripFadeState } from '@/features/emoji-draw/ui/emoji-strip-fade';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
@@ -30,12 +31,12 @@ type EmojiOptionButtonProps = {
   onPress: () => void;
 };
 
-const BUTTON_SIZE = 44;
-const BUTTON_SIZE_SELECTED = 60;
-const TEXT_SIZE = 22;
-const TEXT_SIZE_SELECTED = 35;
+const BUTTON_SIZE = scaleControlSize(44);
+const BUTTON_SIZE_SELECTED = scaleControlSize(60);
+const TEXT_SIZE = scaleControlSize(22);
+const TEXT_SIZE_SELECTED = scaleControlSize(35);
 const SELECTED_BORDER_COLOR = '#1D72F2';
-const EDGE_FADE_WIDTH = 24;
+const EDGE_FADE_WIDTH = scaleControlSize(24);
 const AnimatedText = Animated.createAnimatedComponent(Text);
 const SIZE_TRANSITION_DURATION_MS = 150;
 
@@ -144,6 +145,8 @@ export function BottomToolbar({
 }: BottomToolbarProps) {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
+  const edgeFadeColor = colors.background;
+  const transparentEdgeFadeColor = colors.backgroundTransparent;
   const [stripLayoutWidth, setStripLayoutWidth] = useState(0);
   const [stripContentWidth, setStripContentWidth] = useState(0);
   const [showLeftFade, setShowLeftFade] = useState(false);
@@ -224,7 +227,7 @@ export function BottomToolbar({
           {showLeftFade ? (
             <LinearGradient
               pointerEvents="none"
-              colors={[colors.background, 'transparent']}
+              colors={[edgeFadeColor, transparentEdgeFadeColor]}
               start={{ x: 0, y: 0.5 }}
               end={{ x: 1, y: 0.5 }}
               style={[styles.edgeFade, styles.leftFade]}
@@ -234,7 +237,7 @@ export function BottomToolbar({
           {showRightFade ? (
             <LinearGradient
               pointerEvents="none"
-              colors={['transparent', colors.background]}
+              colors={[transparentEdgeFadeColor, edgeFadeColor]}
               start={{ x: 0, y: 0.5 }}
               end={{ x: 1, y: 0.5 }}
               style={[styles.edgeFade, styles.rightFade]}
@@ -260,8 +263,8 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     gap: Spacing.two,
     paddingHorizontal: Spacing.three,
-    paddingBottom: Spacing.two,
-    paddingTop: Spacing.two,
+    paddingBottom: Spacing.two * CONTROL_SCALE,
+    paddingTop: Spacing.two * CONTROL_SCALE,
   },
   emojiRow: {
     flexDirection: 'row',
@@ -272,22 +275,22 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   searchButton: {
-    width: 44,
-    height: 44,
+    width: BUTTON_SIZE,
+    height: BUTTON_SIZE,
     borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
   },
   searchIcon: {
-    fontSize: 19,
+    fontSize: scaleControlSize(19),
   },
   emojiStripViewport: {
     flex: 1,
     position: 'relative',
   },
   emojiStrip: {
-    padding: Spacing.one,
+    padding: Spacing.one * CONTROL_SCALE,
     alignItems: 'center',
   },
   edgeFade: {

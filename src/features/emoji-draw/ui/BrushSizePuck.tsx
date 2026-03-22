@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Colors, Spacing } from '@/constants/theme';
+import { CONTROL_SCALE, scaleControlSize } from '@/features/emoji-draw/ui/control-scale';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 type BrushSizePuckProps = {
@@ -27,13 +28,13 @@ type TouchSizeArgs = {
 
 type TouchInteractionMode = 'idle' | 'drag' | 'jump';
 
-const SLIDER_HEIGHT = 52;
-const TRACK_HEIGHT = 12;
-const TRACK_HORIZONTAL_INSET = 8;
-const THUMB_SIZE = 34;
-const DRAGGING_THUMB_SIZE = 54;
+const SLIDER_HEIGHT = scaleControlSize(52);
+const TRACK_HEIGHT = scaleControlSize(12);
+const TRACK_HORIZONTAL_INSET = scaleControlSize(8);
+const THUMB_SIZE = scaleControlSize(34);
+const DRAGGING_THUMB_SIZE = scaleControlSize(54);
 const BUTTON_STEP = 1;
-const JUMP_ANIMATION_THRESHOLD = 60;
+const JUMP_ANIMATION_THRESHOLD = scaleControlSize(60);
 const THUMB_TRANSITION_DURATION_MS = 150;
 const positionSpringConfig = {
   damping: 20,
@@ -95,7 +96,7 @@ export function BrushSizePuck({ value, min, max, onChange }: BrushSizePuckProps)
   const [isDragging, setIsDragging] = useState(false);
   const animatedRatio = useRef(new Animated.Value(brushSizeToSliderRatio({ value, min, max }))).current;
   const animatedThumbSize = useRef(new Animated.Value(THUMB_SIZE)).current;
-  const animatedThumbFontSize = useRef(new Animated.Value(11)).current;
+  const animatedThumbFontSize = useRef(new Animated.Value(scaleControlSize(11))).current;
   const lastAnnouncedValueRef = useRef(value);
   const liveValueRef = useRef(value);
   const touchModeRef = useRef<TouchInteractionMode>('idle');
@@ -133,7 +134,7 @@ export function BrushSizePuck({ value, min, max, onChange }: BrushSizePuckProps)
         useNativeDriver: false,
       }),
       Animated.timing(animatedThumbFontSize, {
-        toValue: isDragging ? 16 : 11,
+        toValue: isDragging ? scaleControlSize(16) : scaleControlSize(11),
         duration: THUMB_TRANSITION_DURATION_MS,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: false,
@@ -364,12 +365,12 @@ const styles = StyleSheet.create({
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.two,
+    gap: Spacing.two * CONTROL_SCALE,
   },
   endpointButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: scaleControlSize(40),
+    height: scaleControlSize(40),
+    borderRadius: scaleControlSize(20),
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -379,9 +380,9 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   endpointLabel: {
-    fontSize: 22,
+    fontSize: scaleControlSize(22),
     fontWeight: '700',
-    lineHeight: 24,
+    lineHeight: scaleControlSize(24),
   },
   container: {
     flex: 1,
@@ -393,7 +394,7 @@ const styles = StyleSheet.create({
   sliderShell: {
     position: 'absolute',
     inset: 0,
-    borderRadius: 30,
+    borderRadius: scaleControlSize(30),
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
@@ -427,8 +428,8 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   thumbLabel: {
-    fontSize: 11,
-    lineHeight: 12,
+    fontSize: scaleControlSize(11),
+    lineHeight: scaleControlSize(12),
     fontWeight: '700',
   },
 });

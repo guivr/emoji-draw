@@ -38,7 +38,7 @@ describe('emoji-sound-player', () => {
     primeEmojiPlacementAudio?.();
     jest.runAllTimers();
 
-    expect(createAudioPlayer).toHaveBeenCalledTimes(17);
+    expect(createAudioPlayer).toHaveBeenCalledTimes(23);
     expect(createAudioPlayer?.mock.calls[0]?.[0]).not.toEqual(expect.stringContaining('source-'));
     expect(createAudioPlayer?.mock.calls[1]?.[0]).not.toEqual(expect.stringContaining('source-'));
   });
@@ -91,5 +91,65 @@ describe('emoji-sound-player', () => {
     stopSwirlDragSound?.();
     await Promise.resolve();
     expect(swirlPlayer.pause).toHaveBeenCalled();
+  });
+
+  test('cycles through undo audio variants and reuses cached players', async () => {
+    let playUndoSound: (() => void) | undefined;
+    let createAudioPlayer: jest.Mock | undefined;
+
+    jest.isolateModules(() => {
+      const module = require('@/features/emoji-draw/model/emoji-sound-player');
+      playUndoSound = module.playUndoSound;
+      createAudioPlayer = require('expo-audio').createAudioPlayer;
+    });
+
+    playUndoSound?.();
+    playUndoSound?.();
+    playUndoSound?.();
+    playUndoSound?.();
+    await Promise.resolve();
+
+    expect(createAudioPlayer).toHaveBeenCalledTimes(3);
+    const firstUndoPlayer = createAudioPlayer?.mock.results[0]?.value;
+    expect(firstUndoPlayer.play).toHaveBeenCalledTimes(2);
+  });
+
+  test('cycles through redo audio variants and reuses cached players', async () => {
+    let playRedoSound: (() => void) | undefined;
+    let createAudioPlayer: jest.Mock | undefined;
+
+    jest.isolateModules(() => {
+      const module = require('@/features/emoji-draw/model/emoji-sound-player');
+      playRedoSound = module.playRedoSound;
+      createAudioPlayer = require('expo-audio').createAudioPlayer;
+    });
+
+    playRedoSound?.();
+    playRedoSound?.();
+    playRedoSound?.();
+    await Promise.resolve();
+
+    expect(createAudioPlayer).toHaveBeenCalledTimes(2);
+    const firstRedoPlayer = createAudioPlayer?.mock.results[0]?.value;
+    expect(firstRedoPlayer.play).toHaveBeenCalledTimes(2);
+  });
+
+  test('plays save sound and reuses cached save player', async () => {
+    let playSaveSound: (() => void) | undefined;
+    let createAudioPlayer: jest.Mock | undefined;
+
+    jest.isolateModules(() => {
+      const module = require('@/features/emoji-draw/model/emoji-sound-player');
+      playSaveSound = module.playSaveSound;
+      createAudioPlayer = require('expo-audio').createAudioPlayer;
+    });
+
+    playSaveSound?.();
+    playSaveSound?.();
+    await Promise.resolve();
+
+    expect(createAudioPlayer).toHaveBeenCalledTimes(1);
+    const savePlayer = createAudioPlayer?.mock.results[0]?.value;
+    expect(savePlayer.play).toHaveBeenCalledTimes(2);
   });
 });
