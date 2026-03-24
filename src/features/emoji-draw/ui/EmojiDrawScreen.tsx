@@ -1,11 +1,15 @@
 import React from 'react';
 import { Alert, Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, FontAwesome6 } from '@expo/vector-icons';
 
 import { Colors, Spacing } from '@/constants/theme';
 import { useEmojiCanvas } from '@/features/emoji-draw/model/useEmojiCanvas';
-import { playSaveSound } from '@/features/emoji-draw/model/emoji-sound-player';
+import {
+  getSoundEffectsEnabled,
+  playSaveSound,
+  setSoundEffectsEnabled,
+} from '@/features/emoji-draw/model/emoji-sound-player';
 import { BottomToolbar } from '@/features/emoji-draw/ui/BottomToolbar';
 import { CONTROL_SCALE, scaleControlSize } from '@/features/emoji-draw/ui/control-scale';
 import { EmojiCanvas } from '@/features/emoji-draw/ui/EmojiCanvas';
@@ -39,6 +43,7 @@ export function EmojiDrawScreen() {
 
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
+  const [soundEffectsEnabled, setSoundEffectsEnabledState] = React.useState(getSoundEffectsEnabled);
   const [hasSaveFlashed, setHasSaveFlashed] = React.useState(false);
   const saveFlashOpacity = React.useRef(new Animated.Value(0)).current;
 
@@ -72,45 +77,72 @@ export function EmojiDrawScreen() {
     Alert.alert('Unable to save', 'We could not save this drawing right now.');
   }, [saveDrawing, triggerSaveFlash]);
 
+  const onToggleSoundEffects = React.useCallback(() => {
+    const nextEnabled = !soundEffectsEnabled;
+    setSoundEffectsEnabled(nextEnabled);
+    setSoundEffectsEnabledState(nextEnabled);
+  }, [soundEffectsEnabled]);
+
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <View style={styles.topBar}>
-        <Pressable
-          style={[
-            styles.topIconButton,
-            { backgroundColor: colors.backgroundElement },
-            !canUndo && styles.topButtonDisabled,
-          ]}
-          onPress={undo}
-          disabled={!canUndo}
-          accessibilityRole="button"
-          accessibilityLabel="Undo">
-          <FontAwesome name="undo" size={scaleControlSize(17)} color={colors.text} />
-        </Pressable>
-        <Pressable
-          style={[
-            styles.topIconButton,
-            { backgroundColor: colors.backgroundElement },
-            !canRedo && styles.topButtonDisabled,
-          ]}
-          onPress={redo}
-          disabled={!canRedo}
-          accessibilityRole="button"
-          accessibilityLabel="Redo">
-          <FontAwesome name="repeat" size={scaleControlSize(17)} color={colors.text} />
-        </Pressable>
-        <Pressable style={[
-          styles.topButton,
-          { backgroundColor: colors.backgroundElement }
-        ]} onPress={onSavePress} accessibilityRole="button" accessibilityLabel="Save drawing">
-          <Text style={[styles.topButtonText, { color: colors.text }]}>Save</Text>
-        </Pressable>
-        <Pressable style={[
-          styles.topButton,
-          { backgroundColor: colors.backgroundElement }
-        ]} onPress={clearCanvas} accessibilityRole="button">
-          <Text style={[styles.topButtonText, { color: colors.text }]}>Clear</Text>
-        </Pressable>
+        <View style={styles.topBarLeft}>
+          <Pressable
+            style={[
+              styles.topIconButton,
+              { backgroundColor: colors.backgroundElement },
+            ]}
+            onPress={onToggleSoundEffects}
+            accessibilityRole="button"
+            accessibilityLabel={
+              soundEffectsEnabled ? 'Turn sound effects off' : 'Turn sound effects on'
+            }>
+            <FontAwesome6
+              name={soundEffectsEnabled ? 'volume-high' : 'volume-xmark'}
+              size={scaleControlSize(17)}
+              color={colors.text}
+            />
+          </Pressable>
+        </View>
+
+        <View style={styles.topBarRight}>
+          <Pressable
+            style={[
+              styles.topIconButton,
+              { backgroundColor: colors.backgroundElement },
+              !canUndo && styles.topButtonDisabled,
+            ]}
+            onPress={undo}
+            disabled={!canUndo}
+            accessibilityRole="button"
+            accessibilityLabel="Undo">
+            <FontAwesome name="undo" size={scaleControlSize(17)} color={colors.text} />
+          </Pressable>
+          <Pressable
+            style={[
+              styles.topIconButton,
+              { backgroundColor: colors.backgroundElement },
+              !canRedo && styles.topButtonDisabled,
+            ]}
+            onPress={redo}
+            disabled={!canRedo}
+            accessibilityRole="button"
+            accessibilityLabel="Redo">
+            <FontAwesome name="repeat" size={scaleControlSize(17)} color={colors.text} />
+          </Pressable>
+          <Pressable style={[
+            styles.topButton,
+            { backgroundColor: colors.backgroundElement }
+          ]} onPress={onSavePress} accessibilityRole="button" accessibilityLabel="Save drawing">
+            <Text style={[styles.topButtonText, { color: colors.text }]}>Save</Text>
+          </Pressable>
+          <Pressable style={[
+            styles.topButton,
+            { backgroundColor: colors.backgroundElement }
+          ]} onPress={clearCanvas} accessibilityRole="button">
+            <Text style={[styles.topButtonText, { color: colors.text }]}>Clear</Text>
+          </Pressable>
+        </View>
       </View>
 
       <View testID="canvas-wrap" style={styles.canvasWrap}>
@@ -154,9 +186,19 @@ const styles = StyleSheet.create({
   topBar: {
     minHeight: scaleControlSize(44),
     paddingHorizontal: Spacing.three,
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     alignItems: 'center',
     flexDirection: 'row',
+  },
+  topBarLeft: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+  },
+  topBarRight: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
     gap: Spacing.two,
   },
   topIconButton: {

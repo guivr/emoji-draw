@@ -29,6 +29,7 @@ let swirlDragTimer: ReturnType<typeof setInterval> | null = null;
 let truckDragTimer: ReturnType<typeof setInterval> | null = null;
 let undoCounter = 0;
 let redoCounter = 0;
+let soundEffectsEnabled = true;
 
 function getOrCreatePlayer(
   cacheKey: string,
@@ -57,6 +58,46 @@ async function restartPlayer(player: AudioPlayer) {
   player.play();
 }
 
+function getCachedPlayer(cacheKey: string) {
+  return playerCache.get(cacheKey) ?? null;
+}
+
+async function pauseAndResetPlayer(player: AudioPlayer | null) {
+  if (!player || !('pause' in player) || typeof player.pause !== 'function') {
+    return;
+  }
+
+  try {
+    await player.pause();
+    await player.seekTo(0);
+  } catch {
+    // Keep drawing responsive even if audio fails.
+  }
+}
+
+export function getSoundEffectsEnabled() {
+  return soundEffectsEnabled;
+}
+
+export function setSoundEffectsEnabled(enabled: boolean) {
+  soundEffectsEnabled = enabled;
+  if (enabled) {
+    return;
+  }
+
+  if (swirlDragTimer !== null) {
+    clearInterval(swirlDragTimer);
+    swirlDragTimer = null;
+  }
+  if (truckDragTimer !== null) {
+    clearInterval(truckDragTimer);
+    truckDragTimer = null;
+  }
+
+  void pauseAndResetPlayer(getCachedPlayer('swirl:drag'));
+  void pauseAndResetPlayer(getCachedPlayer('truck:drag'));
+}
+
 export function primeEmojiPlacementAudio() {
   void setAudioModeAsync({ playsInSilentMode: true });
   getOrCreatePlayer('bomb:sizzle', BOMB_SIZZLE_SOURCE);
@@ -80,6 +121,9 @@ export function primeEmojiPlacementAudio() {
 }
 
 export function playTruckDragSound() {
+  if (!soundEffectsEnabled) {
+    return;
+  }
   stopTruckDragSound(false);
   try {
     const player = getOrCreatePlayer('truck:drag', TRUCK_DRAG_SOURCE);
@@ -93,6 +137,9 @@ export function playTruckDragSound() {
 }
 
 export function playSwirlDragSound() {
+  if (!soundEffectsEnabled) {
+    return;
+  }
   stopSwirlDragSound();
   try {
     const player = getOrCreatePlayer('swirl:drag', SWIRL_DRAG_SOURCE);
@@ -106,50 +153,21 @@ export function playSwirlDragSound() {
 }
 
 export function stopSwirlDragSound() {
-  let dragPlayer: AudioPlayer | null = null;
-  try {
-    dragPlayer = getOrCreatePlayer('swirl:drag', SWIRL_DRAG_SOURCE);
-  } catch {
-    dragPlayer = null;
-  }
-
   if (swirlDragTimer !== null) {
     clearInterval(swirlDragTimer);
     swirlDragTimer = null;
   }
-
-  if (dragPlayer && 'pause' in dragPlayer && typeof dragPlayer.pause === 'function') {
-    try {
-      void dragPlayer.pause();
-      void dragPlayer.seekTo(0);
-    } catch {
-      // Keep drawing responsive even if audio fails.
-    }
-  }
+  void pauseAndResetPlayer(getCachedPlayer('swirl:drag'));
 }
 
 export function stopTruckDragSound(playEndSound = true) {
-  let dragPlayer: AudioPlayer | null = null;
-  try {
-    dragPlayer = getOrCreatePlayer('truck:drag', TRUCK_DRAG_SOURCE);
-  } catch {
-    dragPlayer = null;
-  }
-
   if (truckDragTimer !== null) {
     clearInterval(truckDragTimer);
     truckDragTimer = null;
   }
-  if (dragPlayer && 'pause' in dragPlayer && typeof dragPlayer.pause === 'function') {
-    try {
-      void dragPlayer.pause();
-      void dragPlayer.seekTo(0);
-    } catch {
-      // Keep drawing responsive even if audio fails.
-    }
-  }
+  void pauseAndResetPlayer(getCachedPlayer('truck:drag'));
 
-  if (!playEndSound) {
+  if (!playEndSound || !soundEffectsEnabled) {
     return;
   }
 
@@ -162,6 +180,9 @@ export function stopTruckDragSound(playEndSound = true) {
 }
 
 export function playEmojiPlacementSound(emoji: string, stampCount = 1) {
+  if (!soundEffectsEnabled) {
+    return;
+  }
   const safeStampCount = Math.max(1, stampCount);
   const { source, cacheKey } = getSoundSourceForPlacement(emoji, placementCounter);
   placementCounter += safeStampCount;
@@ -175,6 +196,9 @@ export function playEmojiPlacementSound(emoji: string, stampCount = 1) {
 }
 
 export function playBombSizzleSound() {
+  if (!soundEffectsEnabled) {
+    return;
+  }
   try {
     const player = getOrCreatePlayer('bomb:sizzle', BOMB_SIZZLE_SOURCE);
     void restartPlayer(player);
@@ -184,6 +208,9 @@ export function playBombSizzleSound() {
 }
 
 export function playBombExplodeSound() {
+  if (!soundEffectsEnabled) {
+    return;
+  }
   try {
     const player = getOrCreatePlayer('bomb:explode', BOMB_EXPLODE_SOURCE);
     void restartPlayer(player);
@@ -193,6 +220,9 @@ export function playBombExplodeSound() {
 }
 
 export function playUndoSound() {
+  if (!soundEffectsEnabled) {
+    return;
+  }
   const sourceIndex = undoCounter % UNDO_SOURCES.length;
   const source = UNDO_SOURCES[sourceIndex];
   undoCounter += 1;
@@ -207,6 +237,9 @@ export function playUndoSound() {
 }
 
 export function playRedoSound() {
+  if (!soundEffectsEnabled) {
+    return;
+  }
   const sourceIndex = redoCounter % REDO_SOURCES.length;
   const source = REDO_SOURCES[sourceIndex];
   redoCounter += 1;
@@ -221,6 +254,9 @@ export function playRedoSound() {
 }
 
 export function playSaveSound() {
+  if (!soundEffectsEnabled) {
+    return;
+  }
   try {
     const player = getOrCreatePlayer('save:0', SAVE_SOURCE);
     void restartPlayer(player);

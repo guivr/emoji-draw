@@ -46,16 +46,23 @@ jest.mock('@/features/emoji-draw/ui/BottomToolbar', () => ({
 
 jest.mock('@expo/vector-icons', () => ({
   FontAwesome: () => null,
+  FontAwesome6: () => null,
 }));
 
 jest.mock('@/features/emoji-draw/model/emoji-sound-player', () => ({
+  getSoundEffectsEnabled: jest.fn(() => true),
   playSaveSound: jest.fn(),
+  setSoundEffectsEnabled: jest.fn(),
 }));
 
 const mockedUseEmojiCanvas = jest.requireMock('@/features/emoji-draw/model/useEmojiCanvas')
   .useEmojiCanvas as jest.Mock;
 const mockedPlaySaveSound = jest.requireMock('@/features/emoji-draw/model/emoji-sound-player')
   .playSaveSound as jest.Mock;
+const mockedGetSoundEffectsEnabled = jest.requireMock('@/features/emoji-draw/model/emoji-sound-player')
+  .getSoundEffectsEnabled as jest.Mock;
+const mockedSetSoundEffectsEnabled = jest.requireMock('@/features/emoji-draw/model/emoji-sound-player')
+  .setSoundEffectsEnabled as jest.Mock;
 
 function buildCanvasState(overrides: Record<string, unknown> = {}) {
   return {
@@ -88,18 +95,43 @@ function buildCanvasState(overrides: Record<string, unknown> = {}) {
 describe('EmojiDrawScreen', () => {
   beforeEach(() => {
     mockedUseEmojiCanvas.mockReturnValue(buildCanvasState());
+    mockedGetSoundEffectsEnabled.mockReturnValue(true);
     mockedPlaySaveSound.mockClear();
+    mockedSetSoundEffectsEnabled.mockClear();
   });
 
   it('renders undo and redo icon buttons in the top bar', () => {
-    let tree: renderer.ReactTestRenderer;
+    let tree!: renderer.ReactTestRenderer;
     act(() => {
       tree = renderer.create(<EmojiDrawScreen />);
     });
 
+    expect(tree.root.findByProps({ accessibilityLabel: 'Turn sound effects off' })).toBeDefined();
     expect(tree.root.findByProps({ accessibilityLabel: 'Undo' })).toBeDefined();
     expect(tree.root.findByProps({ accessibilityLabel: 'Redo' })).toBeDefined();
     expect(tree.root.findByProps({ accessibilityLabel: 'Save drawing' })).toBeDefined();
+  });
+
+  it('toggles sound effects off and back on from the top-left button', () => {
+    let tree!: renderer.ReactTestRenderer;
+    act(() => {
+      tree = renderer.create(<EmojiDrawScreen />);
+    });
+
+    const soundOnButton = tree.root.findByProps({ accessibilityLabel: 'Turn sound effects off' });
+    act(() => {
+      soundOnButton.props.onPress();
+    });
+
+    expect(mockedSetSoundEffectsEnabled).toHaveBeenNthCalledWith(1, false);
+    expect(tree.root.findByProps({ accessibilityLabel: 'Turn sound effects on' })).toBeDefined();
+
+    const soundOffButton = tree.root.findByProps({ accessibilityLabel: 'Turn sound effects on' });
+    act(() => {
+      soundOffButton.props.onPress();
+    });
+
+    expect(mockedSetSoundEffectsEnabled).toHaveBeenNthCalledWith(2, true);
   });
 
   it('calls saveDrawing when pressing the save button', () => {
@@ -110,7 +142,7 @@ describe('EmojiDrawScreen', () => {
       })
     );
 
-    let tree: renderer.ReactTestRenderer;
+    let tree!: renderer.ReactTestRenderer;
     act(() => {
       tree = renderer.create(<EmojiDrawScreen />);
     });
@@ -125,7 +157,7 @@ describe('EmojiDrawScreen', () => {
   });
 
   it('shows a screenshot-style flash effect when pressing save', async () => {
-    let tree: renderer.ReactTestRenderer;
+    let tree!: renderer.ReactTestRenderer;
     act(() => {
       tree = renderer.create(<EmojiDrawScreen />);
     });
@@ -147,7 +179,7 @@ describe('EmojiDrawScreen', () => {
       })
     );
 
-    let tree: renderer.ReactTestRenderer;
+    let tree!: renderer.ReactTestRenderer;
     act(() => {
       tree = renderer.create(<EmojiDrawScreen />);
     });

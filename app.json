@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "emoji-draw",
+    "name": "Emoji Draw",
     "slug": "emoji-draw",
-    "version": "1.0.1",
+    "version": "1.0.3",
     "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "emojidraw",
@@ -41,7 +41,12 @@
           }
         }
       ],
-      "expo-audio",
+      [
+        "expo-audio",
+        {
+          "enableBackgroundPlayback": false
+        }
+      ],
       "expo-asset",
       [
         "expo-media-library",

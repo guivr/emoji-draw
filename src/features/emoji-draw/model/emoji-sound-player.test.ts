@@ -152,4 +152,26 @@ describe('emoji-sound-player', () => {
     const savePlayer = createAudioPlayer?.mock.results[0]?.value;
     expect(savePlayer.play).toHaveBeenCalledTimes(2);
   });
+
+  test('does not play effects while sound effects are disabled', async () => {
+    let setSoundEffectsEnabled: ((enabled: boolean) => void) | undefined;
+    let playSaveSound: (() => void) | undefined;
+    let playEmojiPlacementSound: ((emoji: string, stampCount?: number) => void) | undefined;
+    let createAudioPlayer: jest.Mock | undefined;
+
+    jest.isolateModules(() => {
+      const module = require('@/features/emoji-draw/model/emoji-sound-player');
+      setSoundEffectsEnabled = module.setSoundEffectsEnabled;
+      playSaveSound = module.playSaveSound;
+      playEmojiPlacementSound = module.playEmojiPlacementSound;
+      createAudioPlayer = require('expo-audio').createAudioPlayer;
+    });
+
+    setSoundEffectsEnabled?.(false);
+    playSaveSound?.();
+    playEmojiPlacementSound?.('🔥');
+    await Promise.resolve();
+
+    expect(createAudioPlayer).not.toHaveBeenCalled();
+  });
 });

@@ -167,16 +167,6 @@ export function BottomToolbar({
   return (
     <View testID="bottom-toolbar-root" style={styles.root}>
       <View testID="bottom-toolbar-emoji-section" style={styles.emojiRow}>
-        <Pressable
-          style={[
-            styles.searchButton,
-            { borderColor: colors.backgroundSelected, backgroundColor: colors.backgroundElement },
-          ]}
-          accessibilityState={{ disabled: true }}
-          accessibilityLabel="Search coming soon">
-          <Text style={styles.searchIcon}>🔎</Text>
-        </Pressable>
-
         <View style={styles.emojiStripViewport}>
           <ScrollView
             horizontal
@@ -273,17 +263,6 @@ const styles = StyleSheet.create({
   },
   sliderRow: {
     width: '100%',
-  },
-  searchButton: {
-    width: BUTTON_SIZE,
-    height: BUTTON_SIZE,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-  },
-  searchIcon: {
-    fontSize: scaleControlSize(19),
   },
   emojiStripViewport: {
     flex: 1,
